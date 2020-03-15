@@ -148,6 +148,9 @@ def main(
 
         for task_config in tqdm(env.sample_tasks(meta_bsz), leave=False, desc='Data'):  # Samples a new config
             clone = deepcopy(policy)
+            if cuda:
+                print(type(clone))
+                clone.to('cuda')
             env.set_task(task_config)
             env.reset()
             task = ch.envs.Runner(env)
@@ -215,4 +218,12 @@ def main(
 
 
 if __name__ == '__main__':
-    main()
+    # all have continuous action space
+    # envs = ['HalfCheetahForwardBackward-v1', 'AntForwardBackward-v1', 
+    #     'AntDirection-v1', 'HumanoidForwardBackward-v1', 'HumanoidDirection-v1',
+    #     'Particles2D-v1'
+    # ]
+    # for env in envs:
+    #     print("Using environment " + env)
+    #     main(env_name=env, num_iterations=100)
+    main(num_iterations=5, cuda=True)
