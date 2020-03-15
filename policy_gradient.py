@@ -1,15 +1,4 @@
-#!/usr/bin/env python3
-
-"""
-Trains a 2-layer MLP with MAML-VPG augmented with the DiCE objective.
-
-Usage:
-
-python examples/rl/maml_dice.py
-"""
-
 import random
-
 import cherry as ch
 import gym
 import numpy as np
@@ -20,7 +9,7 @@ from torch import optim
 from tqdm import tqdm
 
 import learn2learn as l2l
-from policies import DiagNormalPolicy
+from policy_network import Policy
 
 
 def weighted_cumsum(values, weights):
@@ -62,8 +51,17 @@ def maml_pg_loss(train_episodes, learner, baseline, gamma, tau):
     return a2c.policy_loss(l2l.magic_box(cum_log_probs), advantages)
 
 
+def train(env_name='Particles2D-v1', filepath=None):
+
+
+    policy = Policy(input_size=env.state_size, output_size=env.action_size)
+    if filepath:
+        policy.load_state_dict(torch.load(filepath))
+
+    return 
+
+
 def main(
-        experiment='dev',
         env_name='Particles2D-v1',
         adapt_lr=0.1,
         meta_lr=0.001,
@@ -86,7 +84,7 @@ def main(
     env = l2l.gym.AsyncVectorEnv([make_env for _ in range(num_workers)])
     env.seed(seed)
     env = ch.envs.Torch(env)
-    policy = DiagNormalPolicy(env.state_size, env.action_size)
+    policy = Policy(input_size=env.state_size, output_size=env.action_size)
     meta_learner = l2l.algorithms.MAML(policy, lr=meta_lr)
     baseline = LinearValue(env.state_size, env.action_size)
     opt = optim.Adam(policy.parameters(), lr=meta_lr)
@@ -129,3 +127,4 @@ def main(
 
 if __name__ == '__main__':
     main()
+num_workers

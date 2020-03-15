@@ -1,16 +1,6 @@
-#!/usr/bin/env python3
-
-"""
-Trains a 2-layer MLP with MAML-TRPO.
-
-Usage:
-
-python examples/rl/maml_trpo.py
-"""
 
 import random
 from copy import deepcopy
-
 import cherry as ch
 import gym
 import numpy as np
@@ -21,9 +11,8 @@ from torch import autograd
 from torch.distributions.kl import kl_divergence
 from torch.nn.utils import parameters_to_vector, vector_to_parameters
 from tqdm import tqdm
-
 import learn2learn as l2l
-from policies import DiagNormalPolicy
+from policy_network import Policy
 
 
 def compute_advantages(baseline, tau, gamma, rewards, dones, states, next_states):
@@ -106,7 +95,7 @@ def meta_surrogate_loss(iteration_replays, iteration_policies, policy, baseline,
     return mean_loss, mean_kl
 
 
-def main(
+def maml_trpo(
         env_name='AntDirection-v1',
         adapt_lr=0.1,
         meta_lr=1.0,
@@ -136,7 +125,7 @@ def main(
     env.seed(seed)
     env.set_task(env.sample_tasks(1)[0])
     env = ch.envs.Torch(env)
-    policy = DiagNormalPolicy(env.state_size, env.action_size)
+    policy = Policy(env.state_size, env.action_size)
     if cuda:
         policy.to('cuda')
     baseline = LinearValue(env.state_size, env.action_size)
@@ -217,13 +206,25 @@ def main(
                 break
 
 
+def pretrain_trpo():
+    pass
+
+def train_trpo():
+    pass
+
+
 if __name__ == '__main__':
-    # all have continuous action space
-    envs = ['HalfCheetahForwardBackward-v1', 'AntForwardBackward-v1', 
-        'AntDirection-v1', 'HumanoidForwardBackward-v1', 'HumanoidDirection-v1',
+    # testing trpo
+
+    envs = [
+        'HalfCheetahForwardBackward-v1', 
+        'AntForwardBackward-v1', 
+        'AntDirection-v1', 
+        'HumanoidForwardBackward-v1', 
+        'HumanoidDirection-v1',
         'Particles2D-v1'
     ]
+
     for env in envs:
         print("\nUsing environment " + env)
-        main(env_name=env, num_iterations=1, num_workers=4)
-    # main(num_iterations=5, cuda=True)
+        maml_trpo(env_name=env, num_iterations=5)
