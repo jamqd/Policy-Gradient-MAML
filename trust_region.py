@@ -126,8 +126,7 @@ def maml_trpo(
     env.set_task(env.sample_tasks(1)[0])
     env = ch.envs.Torch(env)
     policy = Policy(env.state_size, env.action_size)
-    if cuda:
-        policy.to('cuda')
+    
     baseline = LinearValue(env.state_size, env.action_size)
 
     for iteration in range(num_iterations):
@@ -138,8 +137,7 @@ def maml_trpo(
         for task_config in tqdm(env.sample_tasks(meta_batch_size), leave=False, desc='Data'):  # Samples a new config
             clone = deepcopy(policy)
             # if cuda:
-            #     print(type(clone))
-            #     clone.to('cuda')
+                # clone.to(torch.device('cuda'))
             env.set_task(task_config)
             env.reset()
             task = ch.envs.Runner(env)
@@ -148,6 +146,11 @@ def maml_trpo(
             # Fast Adapt
             for step in range(adapt_steps):
                 train_episodes = task.run(clone, episodes=adapt_batch_size)
+                if cuda:
+                    train_episodes.to(torch.device('cuda'))
+                    policy.to(torch.device('cuda'))
+                    clone.to(torch.device('cuda'))
+                    baseline.to(torch.device('cuda'))
                 clone = fast_adapt_a2c(clone, train_episodes, adapt_lr,
                                        baseline, discount, tau, first_order=True)
                 task_replay.append(train_episodes)
@@ -169,9 +172,9 @@ def maml_trpo(
         ls_max_steps = 15
         max_kl = 0.01
         if cuda:
-            policy.to('cuda', non_blocking=True)
-            baseline.to('cuda', non_blocking=True)
-            iteration_replays = [[r.to('cuda', non_blocking=True) for r in task_replays] for task_replays in
+            policy.to(torch.device('cuda'), non_blocking=True)
+            baseline.to(torch.device('cuda'), non_blocking=True)
+            iteration_replays = [[r.to(torch.device('cuda'), non_blocking=True) for r in task_replays] for task_replays in
                                  iteration_replays]
 
         # Compute CG step direction
@@ -317,7 +320,7 @@ def pretrain_trpo(
 def train_trpo():
     pass
 
-
+    
 if __name__ == '__main__':
     # testing trpo
 
@@ -332,4 +335,4 @@ if __name__ == '__main__':
 
     for env in envs:
         print("\nUsing environment " + env)
-        maml_trpo(env_name=env, num_iterations=5)
+        maml_trpo(env_name=env, num_iterations=5, cuda=True)
