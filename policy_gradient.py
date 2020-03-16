@@ -34,7 +34,7 @@ def compute_advantages(baseline, tau, gamma, rewards, dones, states, next_states
                                        next_value=next_value)
 
 
-def maml_pg_loss(train_episodes, learner, baseline, gamma, tau):
+def pg_loss(train_episodes, learner, baseline, gamma, tau):
     # Update policy and baseline
     states = train_episodes.state()
     actions = train_episodes.action()
@@ -61,14 +61,14 @@ def train(env_name='Particles2D-v1', filepath=None):
     return 
 
 
-def main(
-        env_name='Particles2D-v1',
-        adapt_lr=0.1,
+def maml_pg(
+        env_name='AntDirection-v1',
+        adapt_lr=0.001,
         meta_lr=0.001,
         adapt_steps=1,
         num_iterations=200,
-        meta_bsz=20,
-        adapt_bsz=20,
+        meta_batch_size=20,
+        adapt_batch_size=20,
         tau=1.00,
         gamma=0.99,
         num_workers=2,
@@ -85,7 +85,7 @@ def main(
     env.seed(seed)
     env = ch.envs.Torch(env)
     policy = Policy(input_size=env.state_size, output_size=env.action_size)
-    meta_learner = l2l.algorithms.MAML(policy, lr=meta_lr)
+    meta_learner = l2l.algorithms.MAML(policy, lr=adapt_lr)
     baseline = LinearValue(env.state_size, env.action_size)
     opt = optim.Adam(policy.parameters(), lr=meta_lr)
     all_rewards = []
@@ -93,7 +93,7 @@ def main(
     for iteration in range(num_iterations):
         iteration_loss = 0.0
         iteration_reward = 0.0
-        for task_config in tqdm(env.sample_tasks(meta_bsz), leave=False, desc='Data'):  # Samples a new config
+        for task_config in tqdm(env.sample_tasks(meta_batch_size), leave=False, desc='Data'):  # Samples a new config
             learner = meta_learner.clone()
             env.set_task(task_config)
             env.reset()
@@ -101,30 +101,173 @@ def main(
 
             # Fast Adapt
             for step in range(adapt_steps):
-                train_episodes = task.run(learner, episodes=adapt_bsz)
-                loss = maml_a2c_loss(train_episodes, learner, baseline, gamma, tau)
+                train_episodes = task.run(learner, episodes=adapt_batch_size)
+                loss = pg_loss(train_episodes, learner, baseline, gamma, tau)
                 learner.adapt(loss)
 
             # Compute Validation Loss
-            valid_episodes = task.run(learner, episodes=adapt_bsz)
-            loss = maml_a2c_loss(valid_episodes, learner, baseline, gamma, tau)
+            valid_episodes = task.run(learner, episodes=adapt_batch_size)
+            loss = pg_loss(valid_episodes, learner, baseline, gamma, tau)
             iteration_loss += loss
-            iteration_reward += valid_episodes.reward().sum().item() / adapt_bsz
+            iteration_reward += valid_episodes.reward().sum().item() / adapt_batch_size
 
         # Print statistics
         print('\nIteration', iteration)
-        adaptation_reward = iteration_reward / meta_bsz
+        adaptation_reward = iteration_reward / meta_batch_size
         print('adaptation_reward', adaptation_reward)
         all_rewards.append(adaptation_reward)
 
-        adaptation_loss = iteration_loss / meta_bsz
+        adaptation_loss = iteration_loss / meta_batch_size
         print('adaptation_loss', adaptation_loss.item())
 
         opt.zero_grad()
         adaptation_loss.backward()
         opt.step()
 
+    torch.save(model.state_dict(), './models/pg_maml.pt')
+
+
+def pretrain_pg(
+    env_name='AntDirection-v1',
+    adapt_lr=0.001,
+    adapt_steps=1,
+    num_iterations=200,
+    meta_batch_size=20,
+    adapt_batch_size=20,
+    tau=1.00,
+    gamma=0.99,
+    num_workers=2,
+    seed=42
+):
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+
+    def make_env():
+        return gym.make(env_name)
+
+    env = l2l.gym.AsyncVectorEnv([make_env for _ in range(num_workers)])
+    env.seed(seed)
+    env = ch.envs.Torch(env)
+    policy = Policy(input_size=env.state_size, output_size=env.action_size)
+    learner = l2l.algorithms.MAML(policy, lr=adapt_lr)
+    baseline = LinearValue(env.state_size, env.action_size)
+    opt = optim.Adam(policy.parameters(), lr=adapt_lr)
+    all_rewards = []
+
+    for iteration in range(num_iterations):
+        iteration_loss = 0.0
+        iteration_reward = 0.0
+        for task_config in tqdm(env.sample_tasks(meta_batch_size), leave=False, desc='Data'):  # Samples a new config
+            env.set_task(task_config)
+            env.reset()
+            task = ch.envs.Runner(env)
+
+            # update policy
+            for step in range(adapt_steps):
+                train_episodes = task.run(learner, episodes=adapt_batch_size)
+                loss = pg_loss(train_episodes, learner, baseline, gamma, tau)
+                # learner.adapt(loss)
+                opt.zero_grad()
+                loss.backward()
+                opt.step()
+
+            # Compute Validation Loss
+            valid_episodes = task.run(learner, episodes=adapt_batch_size)
+            loss = pg_loss(valid_episodes, learner, baseline, gamma, tau)
+            iteration_loss += loss
+            iteration_reward += valid_episodes.reward().sum().item() / adapt_batch_size
+
+        # Print statistics
+        print('\nIteration', iteration)
+        adaptation_reward = iteration_reward / meta_batch_size
+        print('adaptation_reward', adaptation_reward)
+        all_rewards.append(adaptation_reward)
+
+        adaptation_loss = iteration_loss / meta_batch_size
+        print('adaptation_loss', adaptation_loss.item())
+        
+    torch.save(model.state_dict(), './models/pg_pretrain.pt')
+
+
+def train_pg(
+    env_name='AntDirection-v1',
+    lr=0.001,
+    num_iterations=200,
+    meta_batch_size=20,
+    adapt_batch_size=20,
+    tau=1.00,
+    gamma=0.99,
+    num_workers=2,
+    seed=42
+    filepath=None
+):
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+
+    def make_env():
+        return gym.make(env_name)
+
+    env = l2l.gym.AsyncVectorEnv([make_env for _ in range(num_workers)])
+    env.seed(seed)
+    env = ch.envs.Torch(env)
+    policy = Policy(input_size=env.state_size, output_size=env.action_size)
+    learner = l2l.algorithms.MAML(policy, lr=adapt_lr)
+    baseline = LinearValue(env.state_size, env.action_size)
+    opt = optim.Adam(policy.parameters(), lr=adapt_lr)
+    all_rewards = []
+
+    for iteration in range(num_iterations):
+        iteration_loss = 0.0
+        iteration_reward = 0.0
+        for task_config in tqdm(env.sample_tasks(meta_batch_size), leave=False, desc='Data'):  # Samples a new config
+            env.set_task(task_config)
+            env.reset()
+            task = ch.envs.Runner(env)
+
+            # update policy
+            for step in range(adapt_steps):
+                train_episodes = task.run(learner, episodes=adapt_batch_size)
+                loss = pg_loss(train_episodes, learner, baseline, gamma, tau)
+                # learner.adapt(loss)
+                opt.zero_grad()
+                loss.backward()
+                opt.step()
+
+            # Compute Validation Loss
+            valid_episodes = task.run(learner, episodes=adapt_batch_size)
+            loss = pg_loss(valid_episodes, learner, baseline, gamma, tau)
+            iteration_loss += loss
+            iteration_reward += valid_episodes.reward().sum().item() / adapt_batch_size
+
+        # Print statistics
+        print('\nIteration', iteration)
+        adaptation_reward = iteration_reward / meta_batch_size
+        print('adaptation_reward', adaptation_reward)
+        all_rewards.append(adaptation_reward)
+
+        adaptation_loss = iteration_loss / meta_batch_size
+        print('adaptation_loss', adaptation_loss.item())
+        
+    torch.save(model.state_dict(), './models/pg_pretrain.pt')
+
+
 
 if __name__ == '__main__':
-    main()
-num_workers
+    # testing vpg
+    # envs = [
+    #     'HalfCheetahForwardBackward-v1', 
+    #     'AntForwardBackward-v1', 
+    #     'AntDirection-v1', 
+    #     'HumanoidForwardBackward-v1', 
+    #     'HumanoidDirection-v1',
+    #     'Particles2D-v1'
+    # ]
+    envs = [
+        'AntDirection-v1',
+    ]
+    for env in envs:
+        print("\nUsing environment " + env)
+        # maml_pg(env_name=env, num_iterations=5, num_workers=4)
+        pretrain_pg(env_name=env, num_iterations=5, num_workers=4)

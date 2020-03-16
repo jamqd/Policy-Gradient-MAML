@@ -22,6 +22,14 @@ def main(run_vpg=True, run_trpo=True):
         'HumanoidDirection-v1',
         'Particles2D-v1'
     ]
+
+    # model architectures
+    hiddens = [
+        [128],
+        [128,128],
+        [128,128,128]
+    ]
+
     
     # run vpg experiments
 
