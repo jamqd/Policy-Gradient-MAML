@@ -1,46 +1,13 @@
-"""
-
-Runs experiments for VPG and TRPO including baselines
-
-"""
-
-from trust_region import *
 from policy_gradient import *
 import os
 
-def main():
-    # directory for storing models
+def main(envs, hiddens, train_iters=50, eval_iters=5):
+    # directory for storing models and performancce data
     if not os.path.exists("./models"):
         os.mkdir("./models")
 
     if not os.path.exists("./performance_data"):
         os.mkdir("./performance_data")
-
-    # all envs have continuous action spaces
-
-    # envs = [
-    #     'HalfCheetahForwardBackward-v1',  
-    #     'AntForwardBackward-v1', 
-    #     'HumanoidForwardBackward-v1', 
-    #     'Particles2D-v1'
-    # ]
-
-    envs = [
-        'HalfCheetahForwardBackward-v1',
-        'AntDirection-v1', 
-        'HumanoidDirection-v1'
-    ]
-
-    envs = ['AntDirection-v1']
-
-    # model architectures
-    hiddens = [
-        [128],
-        [128,128],
-        [128,128,128]
-    ]
-
-    hiddens=[[128]]
 
     
     # run vpg experiments
@@ -63,31 +30,46 @@ def main():
 
             print("\nUsing hidden dims ", hidden_dims)
 
-            # print("\nRunning MAML")
-            # maml_pg(env_name=env, num_iterations=2, policy_hidden=hidden_dims)
+            print("\nRunning MAML")
+            maml_pg(env_name=env, num_iterations=train_iters, policy_hidden=hidden_dims)
 
-            # print("\nRunning Pretrain")
-            # pretrain_pg(env_name=env, num_iterations=2, policy_hidden=hidden_dims)
-
+            print("\nRunning Pretrain")
+            pretrain_pg(env_name=env, num_iterations=train_iters, policy_hidden=hidden_dims)
+            
+            # evaluate scratch vs pretrain vs maml
             print("\nTraining from scratch")
-            train_pg(env_name=env, num_iterations=2, policy_hidden=hidden_dims, mode_str="scratch")
+            train_pg(env_name=env, num_iterations=eval_iters, policy_hidden=hidden_dims, mode_str="scratch")
 
             print("\nTraining from MAML")
-            maml_path = './models/' + env + '/pg_maml_' + "_".join([str(n) for n in hidden_dims]) +'.pt'
-            train_pg(env_name=env, num_iterations=2, policy_hidden=hidden_dims, filepath=maml_path, mode_str="maml")
+            maml_path = './models/' + env + '/' + "_".join([str(n) for n in hidden_dims]) + '/pg_maml' + '.pt'
+            train_pg(env_name=env, num_iterations=eval_iters, policy_hidden=hidden_dims, filepath=maml_path, mode_str="maml")
 
             print("\nTraining from Pretrain")
-            pretrain_path = './models/' + env + '/pg_pretrain_' + "_".join([str(n) for n in hidden_dims]) +'.pt'
-            train_pg(env_name=env, num_iterations=2, policy_hidden=hidden_dims, filepath="",mode_str="pretrain")
+            pretrain_path = './models/' + env + '/' + "_".join([str(n) for n in hidden_dims]) + '/pg_pretrain' + '.pt'
+            train_pg(env_name=env, num_iterations=eval_iters, policy_hidden=hidden_dims, filepath=pretrain_path,mode_str="pretrain")
 
 
 
 def plotGraphs():
     pass
 
-
-
-
-
 if __name__ == '__main__':
-    main()
+    # all envs have continuous action spaces
+    envs = [
+        'HalfCheetahForwardBackward-v1',
+        'AntDirection-v1',
+        'HumanoidDirection-v1',
+        'HalfCheetahForwardBackward-v1',  
+        'AntForwardBackward-v1', 
+        'HumanoidForwardBackward-v1', 
+        'Particles2D-v1'
+    ]
+
+    # model architectures
+    hiddens = [
+        [128],
+        [128,128],
+        [128,128,128]
+    ]
+
+    main(envs, hiddens, train_iters=50, eval_iters=10)

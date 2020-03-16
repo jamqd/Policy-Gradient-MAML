@@ -196,9 +196,10 @@ def train_pg(
     env.seed(seed)
     env = ch.envs.Torch(env)
     policy = Policy(input_size=env.state_size, output_size=env.action_size, hidden_dims=policy_hidden)
-    if filepath:
-        policy.load_state_dict(torch.load(filepath))
     learner = BaseLearner(policy)
+    if filepath:
+        print("Using weights from ", filepath)
+        learner.load_state_dict(torch.load(filepath))
     baseline = LinearValue(env.state_size, env.action_size)
     opt = optim.Adam(policy.parameters(), lr=lr)
 
@@ -233,14 +234,15 @@ def train_pg(
         print('Validation Reward', validation_reward)
         # print('Validation loss', validation_loss.item())
     
-    torch.save(learner.state_dict(), './models/' + env_name + "/" + "_".join([str(n) for n in policy_hidden]) + '/pg_' +  mode_str + 'train' + '.pt')
-    np.save(train_rewards, './performance_data/' + env_name + '/pg_' +  mode_str + 'train_' + "_".join([str(n) for n in policy_hidden]) +'.npy')
-    np.save(val_rewards, './performance_data/' + env_name + '/pg_' +  mode_str + 'train_' + "_".join([str(n) for n in policy_hidden]) +'.npy')
+    torch.save(learner.state_dict(), './models/' + env_name + "/" + "_".join([str(n) for n in policy_hidden]) + '/pg_' + 'train_' + mode_str + '.pt')
+    np.save('./performance_data/' + env_name + "/" + "_".join([str(n) for n in policy_hidden]) + '/pg_' + 'train_' + mode_str + '_train_rewards.npy', train_rewards)
+    np.save('./performance_data/' + env_name + "/" + "_".join([str(n) for n in policy_hidden]) + '/pg_' + 'train_' + mode_str +  '_val_rewards.npy', val_rewards)
     
 
 
 
 if __name__ == '__main__':
+    # for testing only
     envs = [
         'AntDirection-v1',
     ]
