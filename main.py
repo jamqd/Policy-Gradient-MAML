@@ -57,22 +57,18 @@ if __name__ == '__main__':
     # all envs have continuous action spaces
     envs = [
         # john desktop
-        # 'HalfCheetahForwardBackward-v1', # done
-        # 'HumanoidDirection-v1'
+        'HalfCheetahForwardBackward-v1', # done
         
         # john laptop
-        'AntForwardBackward-v1', # done
-        'HumanoidForwardBackward-v1' # done
+        # 'AntForwardBackward-v1', # done
+        # 'HumanoidForwardBackward-v1' # done
 
-        # arjun laptop
-        # 'AntDirection-v1',
-        # 'Particles2D-v1'
     ]
 
     # model architectures
     hiddens = [
-        [128],
-        [128,128],
+        # [128],
+        # [128,128],
         [128,128,128]
     ]
 
