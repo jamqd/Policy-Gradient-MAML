@@ -57,12 +57,12 @@ if __name__ == '__main__':
     # all envs have continuous action spaces
     envs = [
         # john desktop
-        'HalfCheetahForwardBackward-v1', # done
+        # 'HalfCheetahForwardBackward-v1', # done
         # 'HumanoidDirection-v1'
         
         # john laptop
-        # 'AntForwardBackward-v1', # done
-        # 'HumanoidForwardBackward-v1', 
+        'AntForwardBackward-v1', # done
+        'HumanoidForwardBackward-v1' # done
 
         # arjun laptop
         # 'AntDirection-v1',
