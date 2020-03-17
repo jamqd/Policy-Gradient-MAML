@@ -3,6 +3,9 @@ from matplotlib import pyplot as plt
 
 
 def plotGraphs(env, hidden_dims, grad_steps=3, show=False):
+    """
+        Plots performance for environment from policy network with hidden_dims
+    """
     data_path = './performance_data/' + env + '/' + "_".join([str(n) for n in hidden_dims]) + '/'
 
     maml_train = np.load(data_path + "pg_train_maml_train_rewards.npy")
@@ -30,6 +33,9 @@ def plotGraphs(env, hidden_dims, grad_steps=3, show=False):
         plt.show()
 
 def plotGraphsHidden(env, grad_steps=3, show=False):
+    """
+        plots comparison between hidden dims for policy network on env
+    """
     data_path = './performance_data/' + env + '/' 
 
     maml_train_1 = np.load(data_path +  "128/pg_train_maml_train_rewards.npy")
@@ -63,11 +69,10 @@ if __name__ == "__main__":
     plotGraphs("HalfCheetahForwardBackward-v1", [128], grad_steps=grad_steps,  show=True)
     plotGraphs("HalfCheetahForwardBackward-v1", [128,128], grad_steps=grad_steps,  show=True)
     plotGraphs("HalfCheetahForwardBackward-v1", [128,128, 128], grad_steps=grad_steps,  show=True)
-    
-    # plotGraphs("HumanoidForwardBackward-v1", [128], grad_steps=grad_steps, show=True)
-    # plotGraphs("HumanoidForwardBackward-v1", [128,128], grad_steps=grad_steps, show=True)
-    # plotGraphs("HumanoidForwardBackward-v1", [128,128,128], grad_steps=grad_steps, show=True)
-    # plotGraphs("AntForwardBackward-v1", [128], grad_steps=grad_steps, show=True)
-    # plotGraphs("AntForwardBackward-v1", [128,128], grad_steps=grad_steps, show=True)
-    # plotGraphs("AntForwardBackward-v1", [128,128, 128], grad_steps=grad_steps, show=True)
+    plotGraphs("HumanoidForwardBackward-v1", [128], grad_steps=grad_steps, show=True)
+    plotGraphs("HumanoidForwardBackward-v1", [128,128], grad_steps=grad_steps, show=True)
+    plotGraphs("HumanoidForwardBackward-v1", [128,128,128], grad_steps=grad_steps, show=True)
+    plotGraphs("AntForwardBackward-v1", [128], grad_steps=grad_steps, show=True)
+    plotGraphs("AntForwardBackward-v1", [128,128], grad_steps=grad_steps, show=True)
+    plotGraphs("AntForwardBackward-v1", [128,128, 128], grad_steps=grad_steps, show=True)
 

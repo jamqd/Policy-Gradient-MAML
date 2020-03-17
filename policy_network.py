@@ -21,6 +21,7 @@ class Policy(nn.Module):
             layers.append(nn.ReLU())
         layers.append(linear_init(nn.Linear(hidden_dims[-1], output_size)))
         self.mean = nn.Sequential(*layers)
+        # std not a function of observation
         self.sigma = nn.Parameter(torch.Tensor(output_size))
         self.sigma.data.fill_(math.log(1))
 

@@ -14,7 +14,7 @@ from policy_network import Policy
 
 
 def compute_advantages(baseline, discount, rewards, dones, states, next_states):
-    # Update baseline
+    # computes advantages for pg
     returns = ch.td.discount(discount, rewards, dones)
     baseline.fit(states, returns)
     values = baseline(states)
@@ -30,7 +30,7 @@ def compute_advantages(baseline, discount, rewards, dones, states, next_states):
 
 
 def pg_loss(train_episodes, learner, baseline, discount):
-    # Update policy and baseline
+    # computes pg loss
     states = train_episodes.state()
     actions = train_episodes.action()
     rewards = train_episodes.reward()
@@ -62,6 +62,9 @@ def maml_pg(
         num_workers=4,
         seed=0,
 ):
+    """
+        Runs MAML with policy gradient on environment
+    """
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
@@ -125,6 +128,9 @@ def pretrain_pg(
     num_workers=4,
     seed=0
 ):
+    """
+        Pretrains in equivalent way to MAML
+    """
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
@@ -186,6 +192,9 @@ def train_pg(
     mode_str="scratch",
     num_samples=10
 ):
+    """
+        Trains policy gradient on samples from environment distribution
+    """
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
