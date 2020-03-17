@@ -56,19 +56,16 @@ def main(envs, hiddens, train_iters=50, eval_iters=5, num_workers=1):
 if __name__ == '__main__':
     # all envs have continuous action spaces
     envs = [
-        # john desktop
-        'HalfCheetahForwardBackward-v1', # done
-        
-        # john laptop
-        # 'AntForwardBackward-v1', # done
-        # 'HumanoidForwardBackward-v1' # done
+        'HalfCheetahForwardBackward-v1',
+        'AntForwardBackward-v1',
+        'HumanoidForwardBackward-v1'
 
     ]
 
     # model architectures
     hiddens = [
-        # [128],
-        # [128,128],
+        [128],
+        [128,128],
         [128,128,128]
     ]
 
