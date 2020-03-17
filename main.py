@@ -1,6 +1,5 @@
 from policy_gradient import *
 import os
-from matplotlib import pyplot as plt
 
 def main(envs, hiddens, train_iters=50, eval_iters=5, num_workers=1):
     # directory for storing models and performancce data
@@ -49,63 +48,6 @@ def main(envs, hiddens, train_iters=50, eval_iters=5, num_workers=1):
             pretrain_path = './models/' + env + '/' + "_".join([str(n) for n in hidden_dims]) + '/pg_pretrain' + '.pt'
             train_pg(env_name=env, num_iterations=eval_iters, policy_hidden=hidden_dims, filepath=pretrain_path,mode_str="pretrain", num_workers=num_workers)
 
-
-
-def plotGraphs(env, hidden_dims, grad_steps=3, show=False):
-    data_path = './performance_data/' + env + '/' + "_".join([str(n) for n in hidden_dims]) + '/'
-
-    maml_train = np.load(data_path + "pg_train_maml_train_rewards.npy")
-    maml_val = np.load(data_path + "pg_train_maml_val_rewards.npy")
-
-    scratch_train = np.load(data_path + "pg_train_scratch_train_rewards.npy")
-    scratch_val = np.load(data_path + "pg_train_scratch_val_rewards.npy")
-
-    pretrain_train = np.load(data_path + "pg_train_pretrain_train_rewards.npy")
-    pretrain_val = np.load(data_path + "pg_train_pretrain_val_rewards.npy")
-
-    plt.figure()
-    graph_ticks = min(len(maml_train), grad_steps)
-    x_axis = range(graph_ticks)
-    plt.plot(x_axis, maml_val[:graph_ticks], label="MAML")
-    plt.plot(x_axis, scratch_val[:graph_ticks], label="Scratch")
-    plt.plot(x_axis, pretrain_val[:graph_ticks], label="Pretrain")
-    plt.xticks(x_axis)
-    plt.legend(loc="best")
-    plt.xlabel("Number of Gradient Steps")
-    plt.ylabel("Rewards")
-    plt.title(env + ", " +  str(hidden_dims) + ' (Validation)')
-    plt.savefig("./graphs/" + env + "_" +  "_".join([str(n) for n in hidden_dims]) + ".png")
-    if show:
-        plt.show()
-
-def plotGraphsHidden(env, grad_steps=3, show=False):
-    data_path = './performance_data/' + env + '/' 
-
-    maml_train_1 = np.load(data_path +  "128/pg_train_maml_train_rewards.npy")
-    maml_val_1 = np.load(data_path + "128/pg_train_maml_val_rewards.npy")
-
-    maml_train_2 = np.load(data_path +  "128_128/pg_train_maml_train_rewards.npy")
-    maml_val_2 = np.load(data_path + "128_128/pg_train_maml_val_rewards.npy")
-
-    maml_train_3 = np.load(data_path +  "128_128_128/pg_train_maml_train_rewards.npy")
-    maml_val_3 = np.load(data_path + "128_128_128/pg_train_maml_val_rewards.npy")
-
-    
-
-    plt.figure()
-    graph_ticks = min(len(maml_train_1), grad_steps)
-    x_axis = range(graph_ticks)
-    plt.plot(x_axis, maml_val_1[:graph_ticks], label="1 Hidden")
-    plt.plot(x_axis, maml_val_2[:graph_ticks], label="2 Hidden")
-    plt.plot(x_axis, maml_val_3[:graph_ticks], label="3 Hidden")
-    plt.xticks(x_axis)
-    plt.legend(loc="best")
-    plt.xlabel("Number of Gradient Steps")
-    plt.ylabel("Rewards")
-    plt.title(env + ' (Validation)')
-    plt.savefig("./graphs/" + env + "_" +  "hidden.png")
-    if show:
-        plt.show()
 
   
 
