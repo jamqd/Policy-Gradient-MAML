@@ -2,3 +2,5 @@
 *.DS_Store
 models/*
 performance_data/*
+performance_data_old/*
+

@@ -30,11 +30,11 @@ def main(envs, hiddens, train_iters=50, eval_iters=5, num_workers=1):
 
             print("\nUsing hidden dims ", hidden_dims)
 
-            print("\nRunning MAML")
-            maml_pg(env_name=env, num_iterations=train_iters, policy_hidden=hidden_dims, num_workers=num_workers)
+            # print("\nRunning MAML")
+            # maml_pg(env_name=env, num_iterations=train_iters, policy_hidden=hidden_dims, num_workers=num_workers)
 
-            print("\nRunning Pretrain")
-            pretrain_pg(env_name=env, num_iterations=train_iters, policy_hidden=hidden_dims, num_workers=num_workers)
+            # print("\nRunning Pretrain")
+            # pretrain_pg(env_name=env, num_iterations=train_iters, policy_hidden=hidden_dims, num_workers=num_workers)
             
             # evaluate scratch vs pretrain vs maml
             print("\nTraining from scratch")
@@ -57,8 +57,8 @@ if __name__ == '__main__':
     # all envs have continuous action spaces
     envs = [
         # john desktop
-        # 'HalfCheetahForwardBackward-v1', # done
-        'HumanoidDirection-v1'
+        'HalfCheetahForwardBackward-v1', # done
+        # 'HumanoidDirection-v1'
         
         # john laptop
         # 'AntForwardBackward-v1', # done
@@ -76,4 +76,4 @@ if __name__ == '__main__':
         [128,128,128]
     ]
 
-    main(envs, hiddens, train_iters=50, eval_iters=10, num_workers=2)
+    main(envs, hiddens, train_iters=50, eval_iters=3, num_workers=2)

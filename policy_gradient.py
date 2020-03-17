@@ -183,7 +183,8 @@ def train_pg(
     num_workers=4,
     seed=0,
     filepath=None,
-    mode_str="scratch"
+    mode_str="scratch",
+    num_samples=10
 ):
     random.seed(seed)
     np.random.seed(seed)
@@ -192,49 +193,56 @@ def train_pg(
     def make_env():
         return gym.make(env_name)
 
-    env = l2l.gym.AsyncVectorEnv([make_env for _ in range(num_workers)])
-    env.seed(seed)
-    env = ch.envs.Torch(env)
-    policy = Policy(input_size=env.state_size, output_size=env.action_size, hidden_dims=policy_hidden)
-    learner = BaseLearner(policy)
-    if filepath:
-        print("Using weights from ", filepath)
-        learner.load_state_dict(torch.load(filepath))
-    baseline = LinearValue(env.state_size, env.action_size)
-    opt = optim.Adam(policy.parameters(), lr=lr)
+    train_rewards = np.zeros((num_iterations,))
+    val_rewards = np.zeros((num_iterations,))
 
-    train_rewards = []
-    val_rewards = []
 
-    task_config = env.sample_tasks(1)
+    for i in range(num_samples):
+        print("Sample task " + str(i))
+        env = l2l.gym.AsyncVectorEnv([make_env for _ in range(num_workers)])
+        env.seed(seed)
+        env = ch.envs.Torch(env)
+        policy = Policy(input_size=env.state_size, output_size=env.action_size, hidden_dims=policy_hidden)
+        learner = BaseLearner(policy)
+        if filepath:
+            print("Using weights from ", filepath)
+            learner.load_state_dict(torch.load(filepath))
+        baseline = LinearValue(env.state_size, env.action_size)
+        opt = optim.Adam(policy.parameters(), lr=lr)
 
-    for iteration in range(num_iterations):
-        task_config = env.sample_tasks(1)[0]
-        env.set_task(task_config)
-        env.reset()
-        task = ch.envs.Runner(env)
+        
 
-        # update policy
-        train_episodes = task.run(learner, episodes=batch_size)
-        train_loss = pg_loss(train_episodes, learner, baseline, discount)
-        train_reward = train_episodes.reward().sum().item() / batch_size
-        train_rewards.append(train_reward)
+        task_config = env.sample_tasks(1)
 
-        opt.zero_grad()
-        train_loss.backward()
-        opt.step()
+        for iteration in range(num_iterations):
+            task_config = env.sample_tasks(1)[0]
+            env.set_task(task_config)
+            env.reset()
+            task = ch.envs.Runner(env)
 
-        # validation 
-        valid_episodes = task.run(learner, episodes=batch_size)
-        validation_loss = pg_loss(valid_episodes, learner, baseline, discount)
-        validation_reward = valid_episodes.reward().sum().item() / batch_size
-        val_rewards.append(validation_reward)
+            # update policy
+            train_episodes = task.run(learner, episodes=batch_size)
+            train_loss = pg_loss(train_episodes, learner, baseline, discount)
+            train_reward = train_episodes.reward().sum().item() / batch_size
+            train_rewards[iteration] += train_reward
 
-        print('\nIteration', iteration)
-        print('Validation Reward', validation_reward)
-        # print('Validation loss', validation_loss.item())
+            opt.zero_grad()
+            train_loss.backward()
+            opt.step()
+
+            # validation 
+            valid_episodes = task.run(learner, episodes=batch_size)
+            validation_loss = pg_loss(valid_episodes, learner, baseline, discount)
+            validation_reward = valid_episodes.reward().sum().item() / batch_size
+            val_rewards[iteration] += validation_reward
+
+            print('\nIteration', iteration)
+            print('Validation Reward', validation_reward)
+            # print('Validation loss', validation_loss.item())
     
-    torch.save(learner.state_dict(), './models/' + env_name + "/" + "_".join([str(n) for n in policy_hidden]) + '/pg_' + 'train_' + mode_str + '.pt')
+    train_rewards /= num_samples 
+    val_rewards /= num_samples
+    # torch.save(learner.state_dict(), './models/' + env_name + "/" + "_".join([str(n) for n in policy_hidden]) + '/pg_' + 'train_' + mode_str + '.pt')
     np.save('./performance_data/' + env_name + "/" + "_".join([str(n) for n in policy_hidden]) + '/pg_' + 'train_' + mode_str + '_train_rewards.npy', train_rewards)
     np.save('./performance_data/' + env_name + "/" + "_".join([str(n) for n in policy_hidden]) + '/pg_' + 'train_' + mode_str +  '_val_rewards.npy', val_rewards)
     

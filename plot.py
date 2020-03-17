@@ -59,14 +59,15 @@ def plotGraphsHidden(env, grad_steps=3, show=False):
         plt.show()
 
 if __name__ == "__main__":
-    # plotGraphs("HalfCheetahForwardBackward-v1", [128], show=True)
-    # plotGraphs("HalfCheetahForwardBackward-v1", [128,128], show=True)
-    # plotGraphs("HalfCheetahForwardBackward-v1", [128,128, 128], show=True)
     grad_steps = 10
-    plotGraphs("HumanoidForwardBackward-v1", [128], grad_steps=grad_steps, show=True)
-    plotGraphs("HumanoidForwardBackward-v1", [128,128], grad_steps=grad_steps, show=True)
-    plotGraphs("HumanoidForwardBackward-v1", [128,128,128], grad_steps=grad_steps, show=True)
-    plotGraphs("AntForwardBackward-v1", [128], grad_steps=grad_steps, show=True)
-    plotGraphs("AntForwardBackward-v1", [128,128], grad_steps=grad_steps, show=True)
-    plotGraphs("AntForwardBackward-v1", [128,128, 128], grad_steps=grad_steps, show=True)
+    plotGraphs("HalfCheetahForwardBackward-v1", [128], grad_steps=grad_steps,  show=True)
+    plotGraphs("HalfCheetahForwardBackward-v1", [128,128], grad_steps=grad_steps,  show=True)
+    plotGraphs("HalfCheetahForwardBackward-v1", [128,128, 128], grad_steps=grad_steps,  show=True)
+    
+    # plotGraphs("HumanoidForwardBackward-v1", [128], grad_steps=grad_steps, show=True)
+    # plotGraphs("HumanoidForwardBackward-v1", [128,128], grad_steps=grad_steps, show=True)
+    # plotGraphs("HumanoidForwardBackward-v1", [128,128,128], grad_steps=grad_steps, show=True)
+    # plotGraphs("AntForwardBackward-v1", [128], grad_steps=grad_steps, show=True)
+    # plotGraphs("AntForwardBackward-v1", [128,128], grad_steps=grad_steps, show=True)
+    # plotGraphs("AntForwardBackward-v1", [128,128, 128], grad_steps=grad_steps, show=True)
 
