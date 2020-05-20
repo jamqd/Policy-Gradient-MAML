@@ -18,7 +18,7 @@ fasteners==0.15
 future==0.18.2
 glfw==1.11.0
 gym==0.17.1
-httplib2==0.9.2
+httplib2==0.18.0
 idna==2.9
 imageio==2.8.0
 keyring==10.6.0
